@@ -1,0 +1,28 @@
+//Interrupts using Arduino Nano 33 Sense
+//Created by David Ceniceros
+
+const int ledPin = 13;          //LED on board
+volatile int output = LOW;      //output is initially set to low                  
+
+void setup()                                                      
+{                                              
+  pinMode(ledPin,OUTPUT);       //declares LED as output                                           
+                                   
+  attachInterrupt(digitalPinToInterrupt(2),buttonPressed1,CHANGE);  //function for interrupt at pin 2 on CHANGE (LOW to HIGH)
+  attachInterrupt(digitalPinToInterrupt(3),buttonPressed2,CHANGE);  //function for interrupts at pin3 on CHANGE (HIGH to LOW)   
+}
+
+void loop()                                                      
+{  
+   digitalWrite(ledPin,output);     //turns LED ON or OFF depending on output value
+}
+
+void buttonPressed1()           //function excutes when button at pin 2 is pressed                             
+{                    
+   output = HIGH;               //change output to HIGH                                    
+}
+
+void buttonPressed2()           //function excutes when button at pin 3 is pressed
+{                    
+   output = LOW;                //change output to LOW                                
+}
