@@ -1,28 +1,20 @@
 //Interrupts using Arduino Nano 33 Sense
-//Created by David Ceniceros
+//This code was found on the Arduino website (https://www.arduino.cc/reference/en/language/functions/external-interrupts/attachinterrupt/)
 
-const int ledPin = 13;          //LED on board
-volatile int output = LOW;      //output is initially set to low                  
+const byte ledPin = 13;
+const byte interruptPin = 2;
+volatile byte state = LOW;
 
-void setup()                                                      
-{                                              
-  pinMode(ledPin,OUTPUT);       //declares LED as output                                           
-                                   
-  attachInterrupt(digitalPinToInterrupt(2),buttonPressed1,CHANGE);  //function for interrupt at pin 2 on CHANGE (LOW to HIGH)
-  attachInterrupt(digitalPinToInterrupt(3),buttonPressed2,CHANGE);  //function for interrupts at pin3 on CHANGE (HIGH to LOW)   
+void setup() {
+  pinMode(ledPin, OUTPUT);
+  pinMode(interruptPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), blink, CHANGE);
 }
 
-void loop()                                                      
-{  
-   digitalWrite(ledPin,output);     //turns LED ON or OFF depending on output value
+void loop() {
+  digitalWrite(ledPin, state);
 }
 
-void buttonPressed1()           //function excutes when button at pin 2 is pressed                             
-{                    
-   output = HIGH;               //change output to HIGH                                    
-}
-
-void buttonPressed2()           //function excutes when button at pin 3 is pressed
-{                    
-   output = LOW;                //change output to LOW                                
+void blink() {
+  state = !state;
 }
