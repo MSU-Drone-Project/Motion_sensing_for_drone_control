@@ -1,0 +1,170 @@
+//Central device 
+#include <ArduinoBLE.h>
+
+// variables for button
+const int powerOnButton = 2;                        
+const int ascendButton = 3;                         
+const int descendButton = 4;                        
+const int powerOffButton = 5;                       
+const int gestureButton = 6;   
+                     
+int powerOnState = LOW;
+int ascendState = LOW;
+int descendState = LOW;
+int powerOffState = LOW;
+int gestureBeingPerformed = LOW;
+
+void setup() {
+  Serial.begin(9600);
+  while (!Serial);
+
+  // configure the button pin as input
+  pinMode(powerOnButton, INPUT);
+  pinMode(ascendButton, INPUT);
+  pinMode(descendButton, INPUT);
+  pinMode(powerOffButton, INPUT);
+  pinMode(gestureButton, INPUT);
+
+  // initialize the BLE hardware
+  BLE.begin();
+
+  if (!BLE.begin()) {
+    Serial.println("starting BLE failed!");
+    while (1);
+  }
+
+  Serial.println("BLE Central - Remote control");
+
+  // start scanning for peripherals
+  BLE.scanForUuid("19b10000-e8f2-537e-4f6c-d104768a1214");
+} 
+ 
+void loop() {
+  // check if a peripheral has been discovered
+  BLEDevice peripheral = BLE.available();
+
+  if (peripheral) {
+    Serial.println("Locating BLE Peripheral - Drone");
+
+    if (peripheral.localName() != "BLE Peripheral - Drone") {
+    return;
+    }
+
+    // stop scanning
+    BLE.stopScan();
+
+    controlDrone(peripheral);
+
+    // peripheral disconnected, start scanning again
+    BLE.scanForUuid("19b10000-e8f2-537e-4f6c-d104768a1214");
+  }
+}    
+
+void controlDrone(BLEDevice peripheral) {
+  // connect to the peripheral
+  Serial.println("Connecting ...");
+
+  if (peripheral.connect()) {
+    Serial.println("Connected");
+  }
+  else {
+    Serial.println("Failed to connect!");
+    return;
+  }
+
+  // discover peripheral attributes
+  Serial.println("Discovering attributes ...");
+  if (peripheral.discoverAttributes()) {
+    Serial.println("Attributes discovered");
+  } else {
+    Serial.println("Attribute discovery failed!");
+    peripheral.disconnect();
+    return;
+  }
+
+  // retrieve power drone on characteristic
+  BLECharacteristic powerDroneOn = peripheral.characteristic("19b10001-e8f2-537e-4f6c-d104768a1214");
+  BLECharacteristic ascendDrone = peripheral.characteristic("19b10002-e8f2-537e-4f6c-d104768a1214");
+  BLECharacteristic descendDrone = peripheral.characteristic("19b10003-e8f2-537e-4f6c-d104768a1214");
+  BLECharacteristic powerDroneOff = peripheral.characteristic("19b10004-e8f2-537e-4f6c-d104768a1214");
+  BLECharacteristic gestureDrone = peripheral.characteristic("19b10005-e8f2-537e-4f6c-d104768a1214");
+
+  if (!powerDroneOn) {
+    Serial.println("Peripheral does not have ability to power drone on!");
+    peripheral.disconnect();
+    return;
+  }
+  if (!ascendDrone) {
+    Serial.println("Peripheral does not have ability to ascend drone!");
+    peripheral.disconnect();
+    return;
+  }
+  if (!descendDrone) {
+    Serial.println("Peripheral does not have ability to descend drone!");
+    peripheral.disconnect();
+    return;
+  }
+  if (!powerDroneOff) {
+    Serial.println("Peripheral does not have ability to power drone off!");
+    peripheral.disconnect();
+    return;
+  }
+  if (!gestureDrone) {
+    Serial.println("Peripheral will not be able to perform gesture trajectories!");
+    peripheral.disconnect();
+    return;
+  }
+                  
+  // while the peripheral is connected
+  while (peripheral.connected()) {                  
+
+    // read the button pin
+    int powerOnButtonState = digitalRead(powerOnButton);
+    int ascendButtonState = digitalRead(ascendButton);
+    int descendButtonState = digitalRead(descendButton);
+    int powerOffButtonState = digitalRead(powerOffButton);
+    int gestureButtonState = digitalRead(gestureButton);
+
+    if (powerOnState != powerOnButtonState) {
+      powerOnState = powerOnButtonState;
+
+      if (powerOnButtonState) {
+        Serial.println("Drone has been powered on");
+      }
+    }
+
+    if (ascendState != ascendButtonState) {
+      ascendState = ascendButtonState;
+
+      if (ascendButtonState) {
+        Serial.println("Drone has ascended");
+      }
+    }  
+                      
+    if (descendState != descendButtonState) {
+      descendState = descendButtonState;
+
+      if (descendButtonState) {
+        Serial.println("Drone has descended");
+      }
+    } 
+
+    if (powerOffState != powerOffButtonState) {
+      powerOffState = powerOffButtonState;
+
+      if (powerOffButtonState) {
+        Serial.println("Drone has descended");
+      }
+    } 
+
+    if (gestureBeingPerformed != gestureButtonState) {
+      gestureBeingPerformed = gestureButtonState;
+
+      if (gestureButtonState) {
+        Serial.println("Drone has been powered off");
+      }
+    }     
+  }
+
+  Serial.println("Peripheral disconnected");
+}
