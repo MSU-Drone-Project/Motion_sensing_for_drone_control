@@ -99,7 +99,7 @@ void loop() {
 
 
   
-/* this has been discarded from code as it is not needed. Wil erase if needed
+/* this has been discarded from code as it is not needed. Will erase if needed.
     // read the current button pin state
   char powerOnValue = digitalRead(powerOnLED);
   char ascendValue = digitalRead(ascendLED);
