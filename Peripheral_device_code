@@ -1,0 +1,148 @@
+//Peripheral device
+#include <ArduinoBLE.h>
+
+// variables for button
+const int powerOnLED = 2;                        
+const int ascendLED = 3;                         
+const int descendLED = 4;                        
+const int powerOffLED = 5;                       
+const int gestureLED = 6;  
+
+BLEService droneService("19B10000-E8F2-537E-4F6C-D104768A1214"); // BLE drone Service
+
+// BLE LED Switch Characteristic - custom 128-bit UUID, read and writable by central
+BLEByteCharacteristic powerOnledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+BLEByteCharacteristic ascendledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+BLEByteCharacteristic descendledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+BLEByteCharacteristic powerOffledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+BLEByteCharacteristic gestureledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+
+// create button characteristic and allow remote device to get notifications
+//BLEByteCharacteristic powerOnCharacteristic("19B10012-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
+//BLEByteCharacteristic ascendCharacteristic("19B10013-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
+//BLEByteCharacteristic descendCharacteristic("19B10014-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
+//BLEByteCharacteristic powerOffCharacteristic("19B10015-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
+//BLEByteCharacteristic gestureCharacteristic("19B10016-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
+
+void setup() {
+  Serial.begin(9600);
+  while (!Serial);
+
+  // use the LED as an output
+  pinMode(powerOnLED, OUTPUT); 
+  pinMode(ascendLED, OUTPUT); 
+  pinMode(descendLED, OUTPUT); 
+  pinMode(powerOffLED, OUTPUT);
+  pinMode(gestureLED, OUTPUT); 
+
+    // begin initialization
+  if (!BLE.begin()) {
+    Serial.println("starting BLE failed!");
+
+    while (1);
+  }
+
+    // set the local name peripheral advertises
+  BLE.setLocalName("BLE Peripheral - Drone");
+  
+  // set the UUID for the service this peripheral advertises:
+  BLE.setAdvertisedService(droneService);
+
+  // add the characteristics to the service
+  droneService.addCharacteristic(powerOnledCharacteristic);
+  droneService.addCharacteristic(ascendledCharacteristic);
+  droneService.addCharacteristic(descendledCharacteristic);
+  droneService.addCharacteristic(powerOffledCharacteristic);
+  droneService.addCharacteristic(gestureledCharacteristic);
+  //droneService.addCharacteristic(powerOnCharacteristic);
+  //droneService.addCharacteristic(ascendCharacteristic);
+  //droneService.addCharacteristic(descendCharacteristic);
+  //droneService.addCharacteristic(powerOffCharacteristic);
+  //droneService.addCharacteristic(gestureCharacteristic);
+
+  // add the service
+  BLE.addService(droneService);
+
+  powerOnledCharacteristic.writeValue(0);
+  ascendledCharacteristic.writeValue(0);
+  descendledCharacteristic.writeValue(0);
+  powerOffledCharacteristic.writeValue(0);
+  gestureledCharacteristic.writeValue(0);
+  
+  //powerOnCharacteristic.writeValue(0);
+  //ascendCharacteristic.writeValue(0);
+  //descendCharacteristic.writeValue(0);
+  //powerOffCharacteristic.writeValue(0);
+  //gestureCharacteristic.writeValue(0);
+
+  // start advertising
+  BLE.advertise();
+
+  Serial.println("Drone peripheral device waiting for connection");
+}
+
+void loop() {
+  // listen for BLE peripherals to connect:
+  BLEDevice central = BLE.central();
+
+  // if a central is connected to peripheral:
+  if (central) {
+    Serial.print("Connected to central");
+
+    while (central.connected()) {
+      if (switchCharacteristic.written()) {
+    }
+
+
+
+
+
+
+  
+/* this has been discarded from code as it is not needed. Wil erase if needed
+    // read the current button pin state
+  char powerOnValue = digitalRead(powerOnLED);
+  char ascendValue = digitalRead(ascendLED);
+  char descendValue = digitalRead(descendLED);
+  char powerOffValue = digitalRead(powerOffLED);
+  char gestureValue = digitalRead(gestureLED);
+
+  // has the value changed since the last read
+  boolean powerOnChanged = (powerOnCharacteristic.value() != powerOnValue);
+  boolean ascendChanged = (ascendCharacteristic.value() != ascendValue);
+  boolean descendChanged = (descendCharacteristic.value() != descendValue);
+  boolean powerOffChanged = (powerOffCharacteristic.value() != powerOffValue);
+  boolean gestureChanged = (gestureCharacteristic.value() != gestureValue);
+
+  if (powerOnChanged) {
+    // button state changed, update characteristics
+    powerOnledCharacteristic.writeValue(powerOnValue);
+    powerOnCharacteristic.writeValue(powerOnValue);
+  }
+
+  if (powerOnledCharacteristic.written() || powerOnValue) {
+    // update LED, either central has written to characteristic or button state has changed
+    if (powerOnledCharacteristic.value()) {
+      Serial.println("LED on");
+      digitalWrite(ledPin, HIGH);
+    } else {
+      Serial.println("LED off");
+      digitalWrite(ledPin, LOW);
+    }
+  }
+}
+
+// BLE LED Switch Characteristic - custom 128-bit UUID, read and writable by central
+BLEByteCharacteristic powerOnledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+BLEByteCharacteristic ascendledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+BLEByteCharacteristic descendledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+BLEByteCharacteristic powerOffledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+BLEByteCharacteristic gestureledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+
+// create button characteristic and allow remote device to get notifications
+BLEByteCharacteristic powerOnCharacteristic("19B10012-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
+BLEByteCharacteristic ascendCharacteristic("19B10013-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
+BLEByteCharacteristic descendCharacteristic("19B10014-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
+BLEByteCharacteristic powerOffCharacteristic("19B10015-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
+BLEByteCharacteristic gestureCharacteristic("19B10016-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
+*/
