@@ -41,7 +41,7 @@ void setup() {
  
 void loop() {
   // check if a peripheral has been discovered
-  BLEDevice peripheral = BLE.available();
+  BLEDevice peripheral = BLE.available();di
 
   if (peripheral) {
     Serial.println("Locating BLE Peripheral - Drone");
@@ -111,6 +111,23 @@ void controlDrone(BLEDevice peripheral) {
   }
   if (!gestureDrone) {
     Serial.println("Peripheral will not be able to perform gesture trajectories!");
+    peripheral.disconnect();
+    return;
+  }
+
+  // retrieve the LED characteristic
+  BLECharacteristic powerOnCharacteristic = peripheral.characteristic("19b10001-e8f2-537e-4f6c-d104768a1214");  
+  BLECharacteristic ascendledCharacteristic = peripheral.characteristic("19b10002-e8f2-537e-4f6c-d104768a1214");
+  BLECharacteristic descendCharacteristic = peripheral.characteristic("19b10003-e8f2-537e-4f6c-d104768a1214");
+  BLECharacteristic powerOffCharacteristic = peripheral.characteristic("19b10004-e8f2-537e-4f6c-d104768a1214");
+  BLECharacteristic gestureCharacteristic = peripheral.characteristic("19b10005-e8f2-537e-4f6c-d104768a1214");
+
+  if (!powerOnCharacteristic) {
+    Serial.println("Peripheral does not have power on characteristic!");
+    peripheral.disconnect();
+    return;
+  } else if (!powerOnCharacteristic.canWrite()) {
+    Serial.println("Peripheral does not have a writable power on characteristic!");
     peripheral.disconnect();
     return;
   }
