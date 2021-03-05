@@ -1,28 +1,21 @@
 //Peripheral device
 #include <ArduinoBLE.h>
 
+BLEService droneService("19B10000-E8F2-537E-4F6C-D104768A1214"); // BLE drone Service
+
+// BLE LED Switch Characteristic - custom 128-bit UUID, read and writable by central
+BLEByteCharacteristic powerOnCharacteristic("19B10001-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+BLEByteCharacteristic ascendCharacteristic("19B10002-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+BLEByteCharacteristic descendCharacteristic("19B10003-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+BLEByteCharacteristic powerOffCharacteristic("19B10004-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+BLEByteCharacteristic gestureCharacteristic("19B10005-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+
 // variables for button
 const int powerOnLED = 2;                        
 const int ascendLED = 3;                         
 const int descendLED = 4;                        
 const int powerOffLED = 5;                       
 const int gestureLED = 6;  
-
-BLEService droneService("19B10000-E8F2-537E-4F6C-D104768A1214"); // BLE drone Service
-
-// BLE LED Switch Characteristic - custom 128-bit UUID, read and writable by central
-BLEByteCharacteristic powerOnledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
-BLEByteCharacteristic ascendledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
-BLEByteCharacteristic descendledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
-BLEByteCharacteristic powerOffledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
-BLEByteCharacteristic gestureledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
-
-// create button characteristic and allow remote device to get notifications
-//BLEByteCharacteristic powerOnCharacteristic("19B10012-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
-//BLEByteCharacteristic ascendCharacteristic("19B10013-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
-//BLEByteCharacteristic descendCharacteristic("19B10014-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
-//BLEByteCharacteristic powerOffCharacteristic("19B10015-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
-//BLEByteCharacteristic gestureCharacteristic("19B10016-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
 
 void setup() {
   Serial.begin(9600);
@@ -49,31 +42,20 @@ void setup() {
   BLE.setAdvertisedService(droneService);
 
   // add the characteristics to the service
-  droneService.addCharacteristic(powerOnledCharacteristic);
-  droneService.addCharacteristic(ascendledCharacteristic);
-  droneService.addCharacteristic(descendledCharacteristic);
-  droneService.addCharacteristic(powerOffledCharacteristic);
-  droneService.addCharacteristic(gestureledCharacteristic);
-  //droneService.addCharacteristic(powerOnCharacteristic);
-  //droneService.addCharacteristic(ascendCharacteristic);
-  //droneService.addCharacteristic(descendCharacteristic);
-  //droneService.addCharacteristic(powerOffCharacteristic);
-  //droneService.addCharacteristic(gestureCharacteristic);
+  droneService.addCharacteristic(powerOnCharacteristic);
+  droneService.addCharacteristic(ascendCharacteristic);
+  droneService.addCharacteristic(descendCharacteristic);
+  droneService.addCharacteristic(powerOffCharacteristic);
+  droneService.addCharacteristic(gestureCharacteristic);
 
   // add the service
   BLE.addService(droneService);
 
-  powerOnledCharacteristic.writeValue(0);
-  ascendledCharacteristic.writeValue(0);
-  descendledCharacteristic.writeValue(0);
-  powerOffledCharacteristic.writeValue(0);
-  gestureledCharacteristic.writeValue(0);
-  
-  //powerOnCharacteristic.writeValue(0);
-  //ascendCharacteristic.writeValue(0);
-  //descendCharacteristic.writeValue(0);
-  //powerOffCharacteristic.writeValue(0);
-  //gestureCharacteristic.writeValue(0);
+  powerOnCharacteristic.writeValue(0);
+  ascendCharacteristic.writeValue(0);
+  descendCharacteristic.writeValue(0);
+  powerOffCharacteristic.writeValue(0);
+  gestureCharacteristic.writeValue(0);
 
   // start advertising
   BLE.advertise();
@@ -87,62 +69,58 @@ void loop() {
 
   // if a central is connected to peripheral:
   if (central) {
-    Serial.print("Connected to central");
+    Serial.print("Connected to BLE Central - Remote control");
 
+    // while the central is still connected to peripheral:
     while (central.connected()) {
-      if (switchCharacteristic.written()) {
-    }
+    
+      // LED to show devices are connected, power is off
+      digitalWrite(powerOffLED, HIGH);
 
+      // device writes to the characteristic, lighting LEDs
+      if (powerOnCharacteristic.written()) {
+        Serial.println("Drone - powered on and grounded");
+        digitalWrite(powerOnLED, HIGH);
+        digitalWrite(descendLED, HIGH);
+        digitalWrite(powerOffLED, LOW);
+        if (ascendCharacteristic.written()) {
+          Serial.println("Drone - has ascended");
+          digitalWrite(ascendLED, HIGH);
+          digitalWrite(descendLED, LOW);
+          if (descendCharacteristic.written()) {
+            Serial.println("Drone - is grounded");
+            digitalWrite(descendLED, HIGH);
+            digitalWrite(ascendLED, LOW);
+            if (powerOffCharacteristic.written()) {
+              Serial.println("Drone - powered off");
+              digitalWrite(powerOffLED, HIGH);
+              digitalWrite(powerOnLED, LOW);
+              digitalWrite(descendLED, LOW);
+            } // end if powerOff
+          } // if descend
 
-
-
-
-
-  
-/* this has been discarded from code as it is not needed. Will erase if needed.
-    // read the current button pin state
-  char powerOnValue = digitalRead(powerOnLED);
-  char ascendValue = digitalRead(ascendLED);
-  char descendValue = digitalRead(descendLED);
-  char powerOffValue = digitalRead(powerOffLED);
-  char gestureValue = digitalRead(gestureLED);
-
-  // has the value changed since the last read
-  boolean powerOnChanged = (powerOnCharacteristic.value() != powerOnValue);
-  boolean ascendChanged = (ascendCharacteristic.value() != ascendValue);
-  boolean descendChanged = (descendCharacteristic.value() != descendValue);
-  boolean powerOffChanged = (powerOffCharacteristic.value() != powerOffValue);
-  boolean gestureChanged = (gestureCharacteristic.value() != gestureValue);
-
-  if (powerOnChanged) {
-    // button state changed, update characteristics
-    powerOnledCharacteristic.writeValue(powerOnValue);
-    powerOnCharacteristic.writeValue(powerOnValue);
-  }
-
-  if (powerOnledCharacteristic.written() || powerOnValue) {
-    // update LED, either central has written to characteristic or button state has changed
-    if (powerOnledCharacteristic.value()) {
-      Serial.println("LED on");
-      digitalWrite(ledPin, HIGH);
-    } else {
-      Serial.println("LED off");
-      digitalWrite(ledPin, LOW);
-    }
-  }
-}
-
-// BLE LED Switch Characteristic - custom 128-bit UUID, read and writable by central
-BLEByteCharacteristic powerOnledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
-BLEByteCharacteristic ascendledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
-BLEByteCharacteristic descendledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
-BLEByteCharacteristic powerOffledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
-BLEByteCharacteristic gestureledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
-
-// create button characteristic and allow remote device to get notifications
-BLEByteCharacteristic powerOnCharacteristic("19B10012-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
-BLEByteCharacteristic ascendCharacteristic("19B10013-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
-BLEByteCharacteristic descendCharacteristic("19B10014-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
-BLEByteCharacteristic powerOffCharacteristic("19B10015-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
-BLEByteCharacteristic gestureCharacteristic("19B10016-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
-*/
+          else if (gestureCharacteristic.written()) {
+            Serial.println("Drone - is ready to perform gesture");
+            digitalWrite(gestureLED, HIGH);
+            delay(5000);
+            digitalWrite(gestureLED,LOW);
+            if (descendCharacteristic.written()) {
+              Serial.println("Drone - is grounded");
+              digitalWrite(descendLED, HIGH);
+              digitalWrite(ascendLED, LOW);
+              if (powerOffCharacteristic.written()) {
+                Serial.println("Drone - powered off");
+                digitalWrite(powerOffLED, HIGH);
+                digitalWrite(powerOnLED, LOW);
+                digitalWrite(descendLED, LOW);
+              } // end if powerOff
+            } // end if descend
+          } // end else if gesture
+        } // end if ascend
+      } // end powerOn
+    } // while
+    
+    // when the central disconnects
+    Serial.print("Disconnected from BLE Central - Remote control");
+  } //end connection with central
+} //end loop
