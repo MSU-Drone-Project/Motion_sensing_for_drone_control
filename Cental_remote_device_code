@@ -1,17 +1,13 @@
 //Central device 
 #include <ArduinoBLE.h>
 
-// variables for button
-const int powerOnButton = 2;                        
+// variables for button                       
 const int ascendButton = 3;                         
-const int descendButton = 4;                        
-const int powerOffButton = 5;                       
+const int descendButton = 4;                                              
 const int gestureButton = 6;   
                      
-int powerOnState = LOW;
 int ascendState = LOW;
 int descendState = LOW;
-int powerOffState = LOW;
 int gestureBeingPerformed = LOW;
 
 void setup() {
@@ -19,10 +15,8 @@ void setup() {
   while (!Serial);
 
   // configure the button pin as input
-  pinMode(powerOnButton, INPUT);
   pinMode(ascendButton, INPUT);
   pinMode(descendButton, INPUT);
-  pinMode(powerOffButton, INPUT);
   pinMode(gestureButton, INPUT);
 
   // initialize the BLE hardware
@@ -83,17 +77,10 @@ void controlDrone(BLEDevice peripheral) {
   }
 
   // retrieve characteristic
-  BLECharacteristic powerDroneOn = peripheral.characteristic("19b10001-e8f2-537e-4f6c-d104768a1214");
   BLECharacteristic ascendDrone = peripheral.characteristic("19b10002-e8f2-537e-4f6c-d104768a1214");
   BLECharacteristic descendDrone = peripheral.characteristic("19b10003-e8f2-537e-4f6c-d104768a1214");
-  BLECharacteristic powerDroneOff = peripheral.characteristic("19b10004-e8f2-537e-4f6c-d104768a1214");
   BLECharacteristic gestureDrone = peripheral.characteristic("19b10005-e8f2-537e-4f6c-d104768a1214");
 
-  if (!powerDroneOn) {
-    Serial.println("Peripheral does not have ability to power drone on!");
-    peripheral.disconnect();
-    return;
-  }
   if (!ascendDrone) {
     Serial.println("Peripheral does not have ability to ascend drone!");
     peripheral.disconnect();
@@ -101,11 +88,6 @@ void controlDrone(BLEDevice peripheral) {
   }
   if (!descendDrone) {
     Serial.println("Peripheral does not have ability to descend drone!");
-    peripheral.disconnect();
-    return;
-  }
-  if (!powerDroneOff) {
-    Serial.println("Peripheral does not have ability to power drone off!");
     peripheral.disconnect();
     return;
   }
@@ -119,27 +101,10 @@ void controlDrone(BLEDevice peripheral) {
   while (peripheral.connected()) {                  
 
     // read the button pin
-    int powerOnButtonState = digitalRead(powerOnButton);
     int ascendButtonState = digitalRead(ascendButton);
     int descendButtonState = digitalRead(descendButton);
-    int powerOffButtonState = digitalRead(powerOffButton);
     int gestureButtonState = digitalRead(gestureButton);
-
-    if (powerOnState != powerOnButtonState) {
-      powerOnState = powerOnButtonState;    // button is pressed
-
-      if (powerOnButtonState) {
-        Serial.println("Drone has been powered on");
-
-        // button is pressed, write 0x01 to turn the LED on
-        powerDroneOn.writeValue((byte)0x01);
-      }
-      else {
-        // button is released, write 0x00 to turn the LED off
-        powerDroneOn.writeValue((byte)0x00);
-      }
-    }
-
+    
     if (ascendState != ascendButtonState) {
       ascendState = ascendButtonState;
 
@@ -153,8 +118,7 @@ void controlDrone(BLEDevice peripheral) {
         // button is released, write 0x00 to turn the LED off
         ascendDrone.writeValue((byte)0x00);
       }
-    }  
-                      
+    }               
     if (descendState != descendButtonState) {
       descendState = descendButtonState;
 
@@ -168,27 +132,9 @@ void controlDrone(BLEDevice peripheral) {
         // button is released, write 0x00 to turn the LED off
         descendDrone.writeValue((byte)0x00);
       }
-
     } 
-
-    if (powerOffState != powerOffButtonState) {
-      powerOffState = powerOffButtonState;
-
-      if (powerOffButtonState) {
-        Serial.println("Drone has been powered off");
-
-        // button is pressed, write 0x01 to turn the LED on
-        powerDroneOff.writeValue((byte)0x01);
-      }
-      else {
-        // button is released, write 0x00 to turn the LED off
-        powerDroneOff.writeValue((byte)0x00);
-      }
-    } 
-
     if (gestureBeingPerformed != gestureButtonState) {
       gestureBeingPerformed = gestureButtonState;
-
       if (gestureButtonState) {
         Serial.println("Drone is ready for gesture");
 
@@ -199,8 +145,8 @@ void controlDrone(BLEDevice peripheral) {
         // button is released, write 0x00 to turn the LED off
         gestureDrone.writeValue((byte)0x00);
       }
-    }     
-  }
+    }      
+  } // end while
 
   Serial.println("Peripheral disconnected");
 }
