@@ -4,17 +4,13 @@
 BLEService droneService("19B10000-E8F2-537E-4F6C-D104768A1214"); // BLE drone Service
 
 // BLE LED Switch Characteristic - custom 128-bit UUID, read and writable by central
-BLEByteCharacteristic powerOnCharacteristic("19B10001-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
 BLEByteCharacteristic ascendCharacteristic("19B10002-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
 BLEByteCharacteristic descendCharacteristic("19B10003-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
-BLEByteCharacteristic powerOffCharacteristic("19B10004-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
 BLEByteCharacteristic gestureCharacteristic("19B10005-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
 
-// variables for button
-const int powerOnLED = 2;                        
+// variables for button                      
 const int ascendLED = 3;                         
-const int descendLED = 4;                        
-const int powerOffLED = 5;                       
+const int descendLED = 4;                                              
 const int gestureLED = 6;  
 
 void setup() {
@@ -22,10 +18,8 @@ void setup() {
   while (!Serial);
 
   // use the LED as an output
-  pinMode(powerOnLED, OUTPUT); 
   pinMode(ascendLED, OUTPUT); 
   pinMode(descendLED, OUTPUT); 
-  pinMode(powerOffLED, OUTPUT);
   pinMode(gestureLED, OUTPUT); 
 
     // begin initialization
@@ -42,19 +36,16 @@ void setup() {
   BLE.setAdvertisedService(droneService);
 
   // add the characteristics to the service
-  droneService.addCharacteristic(powerOnCharacteristic);
   droneService.addCharacteristic(ascendCharacteristic);
   droneService.addCharacteristic(descendCharacteristic);
-  droneService.addCharacteristic(powerOffCharacteristic);
   droneService.addCharacteristic(gestureCharacteristic);
 
   // add the service
   BLE.addService(droneService);
 
-  powerOnCharacteristic.writeValue(0);
+  // set the initial value for the characeristic
   ascendCharacteristic.writeValue(0);
   descendCharacteristic.writeValue(0);
-  powerOffCharacteristic.writeValue(0);
   gestureCharacteristic.writeValue(0);
 
   // start advertising
@@ -74,52 +65,32 @@ void loop() {
     // while the central is still connected to peripheral:
     while (central.connected()) {
     
-      // LED to show devices are connected, power is off
-      digitalWrite(powerOffLED, HIGH);
+      // LED to show devices are connected, power is on
+      //digitalWrite(powerOnLED, HIGH);
+      digitalWrite(descendLED, HIGH);
+      Serial.println("Drone - connected to remote controller, powered on and stationary");
 
       // device writes to the characteristic, lighting LEDs
-      if (powerOnCharacteristic.written()) {
-        Serial.println("Drone - powered on and grounded");
-        digitalWrite(powerOnLED, HIGH);
-        digitalWrite(descendLED, HIGH);
-        digitalWrite(powerOffLED, LOW);
-        if (ascendCharacteristic.written()) {
-          Serial.println("Drone - has ascended");
-          digitalWrite(ascendLED, HIGH);
-          digitalWrite(descendLED, LOW);
-          if (descendCharacteristic.written()) {
-            Serial.println("Drone - is grounded");
-            digitalWrite(descendLED, HIGH);
-            digitalWrite(ascendLED, LOW);
-            if (powerOffCharacteristic.written()) {
-              Serial.println("Drone - powered off");
-              digitalWrite(powerOffLED, HIGH);
-              digitalWrite(powerOnLED, LOW);
-              digitalWrite(descendLED, LOW);
-            } // end if powerOff
-          } // if descend
-
-          else if (gestureCharacteristic.written()) {
-            Serial.println("Drone - is ready to perform gesture");
-            digitalWrite(gestureLED, HIGH);
-            delay(5000);
-            digitalWrite(gestureLED,LOW);
-            if (descendCharacteristic.written()) {
-              Serial.println("Drone - is grounded");
-              digitalWrite(descendLED, HIGH);
-              digitalWrite(ascendLED, LOW);
-              if (powerOffCharacteristic.written()) {
-                Serial.println("Drone - powered off");
-                digitalWrite(powerOffLED, HIGH);
-                digitalWrite(powerOnLED, LOW);
-                digitalWrite(descendLED, LOW);
-              } // end if powerOff
-            } // end if descend
-          } // end else if gesture
-        } // end if ascend
-      } // end powerOn
-    } // while
-    
+      if (ascendCharacteristic.written()) {
+        Serial.println("Drone - has ascended");
+        digitalWrite(ascendLED, HIGH);
+        digitalWrite(descendLED, LOW);
+        if (ascendCharacteristic.written() && gestureCharacteristic.written()) {
+          Serial.println("Drone - is ready to perform gesture");
+          digitalWrite(gestureLED, HIGH);
+          delay(5000);
+          digitalWrite(gestureLED,LOW);
+        } 
+        else if (descendCharacteristic.written()) {
+          digitalWrite(descendLED, HIGH);
+          digitalWrite(ascendLED, LOW);
+        }
+        else if (descendCharacteristic.written()) {
+           digitalWrite(descendLED, HIGH);
+        digitalWrite(ascendLED, LOW);
+        }
+      }
+    } // end while    
     // when the central disconnects
     Serial.print("Disconnected from BLE Central - Remote control");
   } //end connection with central
