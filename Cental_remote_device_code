@@ -77,9 +77,9 @@ void controlDrone(BLEDevice peripheral) {
   }
 
   // retrieve characteristic
-  BLECharacteristic ascendDrone = peripheral.characteristic("19b10002-e8f2-537e-4f6c-d104768a1214");
-  BLECharacteristic descendDrone = peripheral.characteristic("19b10003-e8f2-537e-4f6c-d104768a1214");
-  BLECharacteristic gestureDrone = peripheral.characteristic("19b10005-e8f2-537e-4f6c-d104768a1214");
+  BLECharacteristic ascendDrone = peripheral.characteristic("19b10001-e8f2-537e-4f6c-d104768a1214");
+  BLECharacteristic descendDrone = peripheral.characteristic("19b10002-e8f2-537e-4f6c-d104768a1214");
+  BLECharacteristic gestureDrone = peripheral.characteristic("19b10003-e8f2-537e-4f6c-d104768a1214");
 
   if (!ascendDrone) {
     Serial.println("Peripheral does not have ability to ascend drone!");
@@ -140,6 +140,9 @@ void controlDrone(BLEDevice peripheral) {
 
         // button is pressed, write 0x01 to turn the LED on
         gestureDrone.writeValue((byte)0x01);
+        delay(5000);
+        gestureDrone.writeValue((byte)0x00);
+        Serial.println("Drone has finished performing gesture");
       }
       else {
         // button is released, write 0x00 to turn the LED off
