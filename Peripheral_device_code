@@ -4,9 +4,9 @@
 BLEService droneService("19B10000-E8F2-537E-4F6C-D104768A1214"); // BLE drone Service
 
 // BLE LED Switch Characteristic - custom 128-bit UUID, read and writable by central
-BLEByteCharacteristic ascendCharacteristic("19B10002-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
-BLEByteCharacteristic descendCharacteristic("19B10003-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
-BLEByteCharacteristic gestureCharacteristic("19B10005-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+BLEByteCharacteristic ascendCharacteristic("19B10001-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+BLEByteCharacteristic descendCharacteristic("19B10002-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+BLEByteCharacteristic gestureCharacteristic("19B10003-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
 
 // variables for button                      
 const int ascendLED = 3;                         
@@ -60,38 +60,47 @@ void loop() {
 
   // if a central is connected to peripheral:
   if (central) {
-    Serial.print("Connected to BLE Central - Remote control");
+    Serial.println("Connected to BLE Central - Remote control");
 
     // while the central is still connected to peripheral:
     while (central.connected()) {
-    
-      // LED to show devices are connected, power is on
-      //digitalWrite(powerOnLED, HIGH);
-      digitalWrite(descendLED, HIGH);
-      Serial.println("Drone - connected to remote controller, powered on and stationary");
 
       // device writes to the characteristic, lighting LEDs
       if (ascendCharacteristic.written()) {
-        Serial.println("Drone - has ascended");
-        digitalWrite(ascendLED, HIGH);
-        digitalWrite(descendLED, LOW);
-        if (ascendCharacteristic.written() && gestureCharacteristic.written()) {
-          Serial.println("Drone - is ready to perform gesture");
-          digitalWrite(gestureLED, HIGH);
+        if (ascendCharacteristic.value()) {
+          Serial.println("Drone - has ascended");
+          digitalWrite(ascendLED, HIGH);         // will turn the LED on
+        } // end value() 
+        else {                                   
+          digitalWrite(ascendLED, LOW);          // will turn the LED off
+        } // end else
+      }// end written
+            // device writes to the characteristic, lighting LEDs
+      if (descendCharacteristic.written()) {
+        if (descendCharacteristic.value()) {
+          Serial.println("Drone - has landed");
+          digitalWrite(descendLED, HIGH);         // will turn the LED on
+        } // end value() 
+        else {                                    
+          digitalWrite(descendLED, LOW);          // will turn the LED off
+        } // end else
+      }// end written
+      if (gestureCharacteristic.written()) {
+        if (gestureCharacteristic.value()) {
+          Serial.println("Drone - ready to perform gesture");
+          digitalWrite(gestureLED, HIGH);         // will turn the LED on
           delay(5000);
-          digitalWrite(gestureLED,LOW);
-        } 
-        else if (descendCharacteristic.written()) {
-          digitalWrite(descendLED, HIGH);
-          digitalWrite(ascendLED, LOW);
-        }
-        else if (descendCharacteristic.written()) {
-           digitalWrite(descendLED, HIGH);
-        digitalWrite(ascendLED, LOW);
-        }
-      }
-    } // end while    
-    // when the central disconnects
-    Serial.print("Disconnected from BLE Central - Remote control");
-  } //end connection with central
-} //end loop
+          digitalWrite(gestureLED, LOW);          // will turn the LED off
+          Serial.println("Drone - has finished performing gesture and is currently ascended");
+        } // end value() 
+        else {                                    
+          //Serial.println("Drone - has ascended 2");
+          digitalWrite(gestureLED, LOW);          // will turn the LED off
+        } // end else
+      }// end written
+    }// end central.connected
+
+    // when the central disconnects, print it out:
+    Serial.print("Disconnected from central");
+  }
+}
